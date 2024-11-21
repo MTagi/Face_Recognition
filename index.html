@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Điểm Danh Sinh Viên</title>
+    <style>
+        /* Tổng thể */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            flex-direction: row; /* Đặt các phần tử theo chiều ngang */
+        }
+
+        /* Phần bảng */
+        .table-container {
+            flex: 3;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Form thêm sinh viên */
+        .form-container {
+            flex: 1;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            position: relative;
+        }
+
+        /* Tiêu đề của form */
+        .form-container h2 {
+            text-align: center;
+        }
+
+        /* Các input và button */
+        input[type="text"], input[type="file"], input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Tạo bảng sinh viên */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        td {
+            background-color: #f9f9f9;
+        }
+
+        /* Định dạng cho thông báo trạng thái */
+        .status {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* Nút chọn ngày nằm ở góc trên bên phải */
+        .date-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 2;
+        }
+
+        /* Định dạng lại vị trí bảng và form */
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="table-container">
+        <!-- Chọn ngày để xem thông tin -->
+        <div class="date-selector">
+            <label for="date">Chọn Ngày:</label>
+            <input type="date" id="date" name="date">
+            <button onclick="updateTable()">Xem</button>
+        </div>
+
+        <h2 style="text-align: center;">Danh Sách Sinh Viên   <br><br><br></h2>
+        <div class="status" id="status"></div>
+        <table id="studentTable">
+            <thead>
+                <tr>
+                    <th>MSSV</th>
+                    <th>Tên Sinh Viên</th>
+                    <th>Ngày</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dữ liệu bảng sẽ được thêm vào ở đây -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Phần form để thêm sinh viên -->
+    <div class="form-container">
+        <h2>Thêm Sinh Viên</h2>
+        <form id="addStudentForm" enctype="multipart/form-data">
+            <label for="mssv">Mã Sinh Viên:</label>
+            <input type="text" id="mssv" name="mssv" required>
+
+            <label for="name">Tên Sinh Viên:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="image">Chọn Ảnh:</label>
+            <input type="file" id="image" name="image" required>
+
+            <button type="submit">Thêm Sinh Viên</button>
+        </form>
+
+        <div class="status" id="status"></div>
+    </div>
+</div>
+<script>
+    // Hàm để lấy ngày theo múi giờ GMT+7
+    function getDateInGMT7() {
+        // Lấy thời gian hiện tại
+        const now = new Date();
+
+        // Tính toán thời gian UTC (giờ GMT)
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+
+        // Thêm 7 giờ (GMT+7)
+        const gmt7 = new Date(utc + 7 * 3600000);
+
+        // Lấy ngày ở định dạng YYYY-MM-DD
+        const year = gmt7.getFullYear();
+        const month = String(gmt7.getMonth() + 1).padStart(2, '0'); // Tháng bắt đầu từ 0
+        const day = String(gmt7.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+    }
+</script>
+<script>
+    // Hàm cập nhật bảng sinh viên
+    // Hàm cập nhật bảng sinh viên
+function updateTable() {
+    const selectedDate = document.getElementById("date").value || getDateInGMT7();  // Default to today's date
+    fetch(`http://127.0.0.1:5000/students?date=${selectedDate}`)
+    .then(response => response.json())
+    .then(data => {
+        console.log("Dữ liệu nhận được từ API:", data);  // Log dữ liệu ra console để kiểm tra
+        const tableBody = document.querySelector("#studentTable tbody");
+        tableBody.innerHTML = '';  // Xóa dữ liệu cũ trong bảng
+
+        if (Array.isArray(data)) {
+            data.forEach(student => {
+                let row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${student.mssv}</td>
+                    <td>${student.name}</td>
+                    <td>${student.date}</td>
+                    <td>${student.status}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } else {
+            console.error('Dữ liệu không phải là một mảng hợp lệ:', data);
+        }
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+    });
+}
+
+
+    // Xử lý form khi người dùng nhấn nút thêm
+    document.getElementById('addStudentForm').addEventListener('submit', function(event) {
+        event.preventDefault();  // Ngăn chặn hành vi mặc định của form
+
+        let formData = new FormData(this);
+
+        // Gửi dữ liệu tới API Flask
+        fetch('http://127.0.0.1:5000/add_student', {  // URL trỏ đến back-end Flask
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hiển thị thông báo trạng thái
+            let statusElement = document.getElementById('status');
+            if (data.status === 'success') {
+                statusElement.style.color = 'green';
+            } else {
+                statusElement.style.color = 'red';
+            }
+            statusElement.textContent = data.message;
+
+            // Sau khi thêm sinh viên thành công, làm mới bảng
+            updateTable();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+
+    // Cập nhật bảng ngay khi load trang (mặc định chọn ngày hôm nay)
+    updateTable();
+    setInterval(updateTable, 5000);  // Gọi hàm updateTable() mỗi 5 giây
+</script>
+
+</body>
+</html>
