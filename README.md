@@ -2,8 +2,12 @@ Dự án "Face Recognition" là một ứng dụng nhận diện khuôn mặt đ
 
 Công nghê: Sử dụng YOLOv8, iResNet và cơ sở dữ liệu MongoDB. 
 
-Run: 
+Các bước nhận diện: 
+1. Detect các khuôn mặt dựa trên hình ảnh.
+2. Embedding các khuôn mặt và so sánh với các embedding trong database.
+3. Nhận diện các khuông mặt nếu có sự trùng khớp giữa 2 embedding. 
 
+Run: 
 1. Cài đặt các thư viện cần thiết.  
 2. Go live file index.html để thực hiện chạy giao diện.
 3. Chạy file backend.py để thực hiện chạy backend kết nối với fontend.
